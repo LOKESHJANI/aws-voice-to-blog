@@ -10,10 +10,11 @@ An AI pipeline that converts voice recordings into blog posts using AWS.
 - IAM — least-privilege service permissions
 
 ## Status
+## Status
 - [x] Phase 1: AWS account + GitHub setup
 - [x] Phase 2: S3 buckets
 - [x] Phase 3: IAM role
 - [x] Phase 4: Lambda function
-- [ ] Phase 5: S3 event trigger
+- [x] Phase 5: S3 event trigger
 - [ ] Phase 6: Bedrock access
 - [ ] Phase 7: End-to-end test
