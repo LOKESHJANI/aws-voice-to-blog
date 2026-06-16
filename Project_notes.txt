@@ -1,0 +1,1 @@
+role ARN:    arn:aws:iam::718003705766:role/voice-blog-lambda-role

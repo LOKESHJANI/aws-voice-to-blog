@@ -11,8 +11,8 @@ An AI pipeline that converts voice recordings into blog posts using AWS.
 
 ## Status
 - [x] Phase 1: AWS account + GitHub setup
-- [ ] Phase 2: S3 buckets
-- [ ] Phase 3: IAM role
+- [x] Phase 2: S3 buckets
+- [x] Phase 3: IAM role
 - [ ] Phase 4: Lambda function
 - [ ] Phase 5: S3 event trigger
 - [ ] Phase 6: Bedrock access
