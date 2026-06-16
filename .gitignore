@@ -1,0 +1,12 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.env
+*.zip
+
+# VS Code
+.vscode/
+
+# AWS
+.aws-sam/
