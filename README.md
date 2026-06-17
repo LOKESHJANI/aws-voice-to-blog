@@ -15,5 +15,8 @@ An AI pipeline that converts voice recordings into blog posts using AWS.
 - [x] Phase 3: IAM role
 - [x] Phase 4: Lambda function
 - [x] Phase 5: S3 event trigger
-- [ ] Phase 6: Bedrock access
-- [ ] Phase 7: End-to-end test
+- [x] Phase 6: Bedrock access
+- [x] Phase 7: End-to-end test ✓ COMPLETE
+
+## Live Demo
+http://voice-blog-output-lokesh.s3-website-us-east-1.amazonaws.com
