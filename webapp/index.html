@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Voice to Blog Generator</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: #0f0f13;
+      color: #e2e2e2;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 40px 20px;
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 48px;
+    }
+
+    .header h1 {
+      font-size: 2.4rem;
+      font-weight: 700;
+      background: linear-gradient(135deg, #6366f1, #8b5cf6, #a78bfa);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 12px;
+    }
+
+    .header p {
+      color: #6b7280;
+      font-size: 1rem;
+    }
+
+    .card {
+      background: #1a1a24;
+      border: 1px solid #2d2d3d;
+      border-radius: 16px;
+      padding: 32px;
+      width: 100%;
+      max-width: 680px;
+      margin-bottom: 24px;
+    }
+
+    .section-title {
+      font-size: 0.75rem;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: #6366f1;
+      margin-bottom: 16px;
+    }
+
+    .record-area {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+      padding: 24px 0;
+    }
+
+    .record-btn {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      border: none;
+      background: #6366f1;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+    }
+
+    .record-btn:hover { background: #4f46e5; transform: scale(1.05); }
+
+    .record-btn.recording {
+      background: #ef4444;
+      animation: pulse 1.5s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); }
+      50% { box-shadow: 0 0 0 16px rgba(239, 68, 68, 0); }
+    }
+
+    .record-btn svg { width: 32px; height: 32px; fill: white; }
+
+    .record-status { font-size: 0.9rem; color: #6b7280; }
+    .record-status.active { color: #ef4444; }
+
+    .timer {
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: #e2e2e2;
+      font-variant-numeric: tabular-nums;
+      display: none;
+    }
+
+    .timer.visible { display: block; }
+
+    .divider {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin: 8px 0;
+      color: #3d3d52;
+      font-size: 0.8rem;
+    }
+
+    .divider::before, .divider::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: #2d2d3d;
+    }
+
+    .upload-area {
+      border: 2px dashed #2d2d3d;
+      border-radius: 12px;
+      padding: 28px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .upload-area:hover { border-color: #6366f1; background: #1e1e2e; }
+    .upload-area.has-file { border-color: #6366f1; background: #1e1e2e; }
+    .upload-area svg { width: 36px; height: 36px; stroke: #6b7280; margin-bottom: 12px; }
+    .upload-area p { color: #6b7280; font-size: 0.9rem; }
+    .upload-area .filename { color: #a78bfa; font-size: 0.85rem; margin-top: 6px; }
+
+    #file-input { display: none; }
+
+    .generate-btn {
+      width: 100%;
+      padding: 16px;
+      background: linear-gradient(135deg, #6366f1, #8b5cf6);
+      border: none;
+      border-radius: 12px;
+      color: white;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      margin-top: 16px;
+    }
+
+    .generate-btn:hover { opacity: 0.9; transform: translateY(-1px); }
+    .generate-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+
+    .loading {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+      padding: 32px 0;
+    }
+
+    .loading.visible { display: flex; }
+
+    .spinner {
+      width: 48px;
+      height: 48px;
+      border: 3px solid #2d2d3d;
+      border-top-color: #6366f1;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .loading-steps { display: flex; flex-direction: column; gap: 8px; width: 100%; }
+
+    .step {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 0.85rem;
+      color: #4b5563;
+      transition: color 0.3s;
+    }
+
+    .step.active { color: #a78bfa; }
+    .step.done { color: #10b981; }
+
+    .step-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #2d2d3d;
+      flex-shrink: 0;
+      transition: background 0.3s;
+    }
+
+    .step.active .step-dot { background: #6366f1; }
+    .step.done .step-dot { background: #10b981; }
+
+    .blog-output { display: none; }
+    .blog-output.visible { display: block; }
+
+    .blog-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+
+    .copy-btn {
+      background: #2d2d3d;
+      border: none;
+      border-radius: 8px;
+      color: #a78bfa;
+      font-size: 0.8rem;
+      padding: 6px 14px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .copy-btn:hover { background: #3d3d52; }
+
+    .blog-content {
+      background: #0f0f13;
+      border: 1px solid #2d2d3d;
+      border-radius: 12px;
+      padding: 28px;
+      line-height: 1.8;
+      color: #d1d5db;
+      max-height: 500px;
+      overflow-y: auto;
+    }
+
+    .blog-content h1, .blog-content h2, .blog-content h3 {
+      color: #e2e2e2;
+      margin: 16px 0 8px;
+    }
+
+    .blog-content p { margin-bottom: 12px; }
+
+    .blog-url {
+      margin-top: 12px;
+      font-size: 0.8rem;
+      color: #6b7280;
+      word-break: break-all;
+    }
+
+    .blog-url a { color: #6366f1; }
+
+    .error-msg {
+      background: #2d1515;
+      border: 1px solid #ef4444;
+      border-radius: 8px;
+      padding: 12px 16px;
+      color: #f87171;
+      font-size: 0.85rem;
+      display: none;
+      margin-top: 12px;
+    }
+
+    .error-msg.visible { display: block; }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <h1>Voice to Blog</h1>
+    <p>Record or upload your voice — get a blog post in seconds</p>
+  </div>
+
+  <div class="card">
+    <p class="section-title">Record your voice</p>
+    <div class="record-area">
+      <button class="record-btn" id="record-btn" onclick="toggleRecording()">
+        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path d="M12 1a4 4 0 0 1 4 4v6a4 4 0 0 1-8 0V5a4 4 0 0 1 4-4zm-1 17.93V21H9v2h6v-2h-2v-2.07A8 8 0 0 0 20 11h-2a6 6 0 0 1-12 0H4a8 8 0 0 0 7 7.93z"/>
+        </svg>
+      </button>
+      <div class="timer" id="timer">0:00</div>
+      <p class="record-status" id="record-status">Click to start recording</p>
+    </div>
+
+    <div class="divider">or</div>
+
+    <p class="section-title" style="margin-top:16px">Upload audio file</p>
+    <div class="upload-area" id="upload-area" onclick="document.getElementById('file-input').click()">
+      <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <p>Click to upload an MP3 or WAV file</p>
+      <p class="filename" id="filename"></p>
+    </div>
+    <input type="file" id="file-input" accept=".mp3,.wav,.m4a" onchange="handleFileSelect(this)">
+
+    <button class="generate-btn" id="generate-btn" onclick="generateBlog()" disabled>
+      Generate Blog Post
+    </button>
+    <div class="error-msg" id="error-msg"></div>
+  </div>
+
+  <div class="card">
+    <div class="loading" id="loading">
+      <div class="spinner"></div>
+      <div class="loading-steps">
+        <div class="step" id="step-1"><div class="step-dot"></div>Uploading audio to AWS S3...</div>
+        <div class="step" id="step-2"><div class="step-dot"></div>Transcribing speech with Amazon Transcribe...</div>
+        <div class="step" id="step-3"><div class="step-dot"></div>Writing blog post with Amazon Nova Lite...</div>
+        <div class="step" id="step-4"><div class="step-dot"></div>Publishing to S3...</div>
+      </div>
+    </div>
+
+    <div class="blog-output" id="blog-output">
+      <div class="blog-header">
+        <p class="section-title" style="margin:0">Your blog post</p>
+        <button class="copy-btn" onclick="copyBlog()">Copy HTML</button>
+      </div>
+      <div class="blog-content" id="blog-content"></div>
+      <p class="blog-url">Live URL: <a id="blog-url-link" href="#" target="_blank"></a></p>
+    </div>
+  </div>
+
+  <script>
+    // Replace with your actual API Gateway URL
+    const API_URL = 'https://am0ls7e9x2.execute-api.us-east-1.amazonaws.com/prod/generate';
+
+    let mediaRecorder = null;
+    let audioChunks = [];
+    let recordedBlob = null;
+    let uploadedFile = null;
+    let timerInterval = null;
+    let seconds = 0;
+
+    function toggleRecording() {
+      if (mediaRecorder && mediaRecorder.state === 'recording') {
+        stopRecording();
+      } else {
+        startRecording();
+      }
+    }
+
+    async function startRecording() {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        mediaRecorder = new MediaRecorder(stream);
+        audioChunks = [];
+
+        mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
+        mediaRecorder.onstop = () => {
+          recordedBlob = new Blob(audioChunks, { type: 'audio/mp3' });
+          uploadedFile = null;
+          document.getElementById('filename').textContent = '';
+          document.getElementById('upload-area').classList.remove('has-file');
+          document.getElementById('generate-btn').disabled = false;
+        };
+
+        mediaRecorder.start();
+        document.getElementById('record-btn').classList.add('recording');
+        document.getElementById('record-status').textContent = 'Recording... click to stop';
+        document.getElementById('record-status').classList.add('active');
+        document.getElementById('timer').classList.add('visible');
+
+        seconds = 0;
+        timerInterval = setInterval(() => {
+          seconds++;
+          const m = Math.floor(seconds / 60);
+          const s = seconds % 60;
+          document.getElementById('timer').textContent =
+            `${m}:${s.toString().padStart(2, '0')}`;
+        }, 1000);
+
+      } catch (err) {
+        showError('Microphone access denied. Please allow microphone access and try again.');
+      }
+    }
+
+    function stopRecording() {
+      mediaRecorder.stop();
+      mediaRecorder.stream.getTracks().forEach(t => t.stop());
+      clearInterval(timerInterval);
+      document.getElementById('record-btn').classList.remove('recording');
+      document.getElementById('record-status').textContent = 'Recording saved — ready to generate';
+      document.getElementById('record-status').classList.remove('active');
+    }
+
+    function handleFileSelect(input) {
+      const file = input.files[0];
+      if (!file) return;
+      uploadedFile = file;
+      recordedBlob = null;
+      document.getElementById('filename').textContent = file.name;
+      document.getElementById('upload-area').classList.add('has-file');
+      document.getElementById('generate-btn').disabled = false;
+    }
+
+    function toBase64(blob) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result.split(',')[1]);
+        reader.onerror = reject;
+        reader.readAsDataURL(blob);
+      });
+    }
+
+    function sleep(ms) {
+      return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
+    function setStep(n) {
+      for (let i = 1; i <= 4; i++) {
+        const el = document.getElementById(`step-${i}`);
+        el.classList.remove('active', 'done');
+        if (i < n) el.classList.add('done');
+        if (i === n) el.classList.add('active');
+      }
+    }
+
+    function showError(msg) {
+      const el = document.getElementById('error-msg');
+      el.textContent = msg;
+      el.classList.add('visible');
+    }
+
+    function parseResponse(data) {
+      // Handle both direct JSON and wrapped body string
+      if (data && data.body) {
+        try {
+          return typeof data.body === 'string' ? JSON.parse(data.body) : data.body;
+        } catch (e) {
+          console.error('Failed to parse body:', data.body);
+          return data;
+        }
+      }
+      return data;
+    }
+
+    async function generateBlog() {
+      const audioData = recordedBlob || uploadedFile;
+      if (!audioData) return;
+
+      document.getElementById('generate-btn').disabled = true;
+      document.getElementById('loading').classList.add('visible');
+      document.getElementById('blog-output').classList.remove('visible');
+      document.getElementById('error-msg').classList.remove('visible');
+      setStep(1);
+
+      try {
+        // Convert audio to base64
+        const base64Audio = await toBase64(audioData);
+        console.log('Audio converted to base64, length:', base64Audio.length);
+        setStep(1);
+
+        // Start the transcription job
+        console.log('Starting job...');
+        const startRes = await fetch(API_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'start', audio: base64Audio })
+        });
+
+        console.log('Start response status:', startRes.status);
+        const startData = await startRes.json();
+        console.log('Start response data:', JSON.stringify(startData));
+
+        const startResult = parseResponse(startData);
+        console.log('Parsed start result:', JSON.stringify(startResult));
+
+        if (!startResult.job_id) {
+          throw new Error('No job_id returned from API: ' + JSON.stringify(startResult));
+        }
+
+        const jobId = startResult.job_id;
+        console.log('Job started with ID:', jobId);
+        setStep(2);
+
+        // Poll every 5 seconds for completion
+        const blogResult = await pollForResult(jobId);
+
+        setStep(4);
+
+        // Display the blog post
+        document.getElementById('loading').classList.remove('visible');
+        document.getElementById('blog-output').classList.add('visible');
+        document.getElementById('blog-content').innerHTML = blogResult.content;
+        document.getElementById('blog-url-link').href = blogResult.url;
+        document.getElementById('blog-url-link').textContent = blogResult.url;
+        document.getElementById('generate-btn').disabled = false;
+
+      } catch (err) {
+        console.error('Error:', err.message);
+        document.getElementById('loading').classList.remove('visible');
+        showError('Something went wrong: ' + err.message);
+        document.getElementById('generate-btn').disabled = false;
+      }
+    }
+
+    async function pollForResult(jobId) {
+      const maxAttempts = 40;
+      let attempts = 0;
+
+      while (attempts < maxAttempts) {
+        await sleep(5000);
+        attempts++;
+        console.log(`Poll attempt ${attempts} for job: ${jobId}`);
+
+        const res = await fetch(API_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'check', job_id: jobId })
+        });
+
+        console.log('Poll response status:', res.status);
+        const data = await res.json();
+        console.log('Poll response data:', JSON.stringify(data));
+
+        const result = parseResponse(data);
+        console.log('Poll status:', result.status);
+
+        if (result.status === 'COMPLETED') {
+          setStep(3);
+          return result;
+        }
+
+        if (result.status === 'FAILED') {
+          throw new Error('Transcription failed');
+        }
+
+        if (attempts <= 3) setStep(2);
+        else setStep(3);
+      }
+
+      throw new Error('Timed out waiting for blog post');
+    }
+
+    function copyBlog() {
+      const content = document.getElementById('blog-content').innerHTML;
+      navigator.clipboard.writeText(content);
+      document.querySelector('.copy-btn').textContent = 'Copied!';
+      setTimeout(() => document.querySelector('.copy-btn').textContent = 'Copy HTML', 2000);
+    }
+  </script>
+</body>
+</html>
