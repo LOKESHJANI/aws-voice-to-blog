@@ -10,3 +10,7 @@ s3-trigger.json
 
 # AWS
 .aws-sam/
+
+AWSCLIV2.pkg
+response.json
+*.pkg
